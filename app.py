@@ -1,4 +1,5 @@
 import os
+import time
 import requests
 from flask import Flask, request, jsonify
 from pydantic import BaseModel, ValidationError
@@ -27,6 +28,10 @@ def fetch_blog_content(url):
         return text.strip()
     except Exception as e:
         raise Exception(f"Error fetching blog content: {str(e)}")
+
+@app.route("/", methods=["get"])
+def home():
+    return "Welcome Camunda Advisory", 200
 
 @app.route("/check_blog", methods=["POST"])
 def check_blog():
@@ -96,6 +101,30 @@ def check_blog():
         }), 400
     except Exception as e:
         return jsonify({"error": str(e)}), 400
+
+@app.route("/get_impacted_routes", methods=["post"])
+def home():
+    print("get_impacted_routes")
+    time.sleep(3)
+    return jsonify([]), 200
+
+@app.route("/get_impacted_bookings", methods=["post"])
+def home():
+    print("get_impacted_bookings")
+    time.sleep(3)
+    return jsonify([]), 200
+
+@app.route("/get_customer_preferences", methods=["post"])
+def home():
+    print("get_customer_preferences")
+    time.sleep(3)
+    return jsonify([]), 200
+
+@app.route("/d365", methods=["post"])
+def home():
+    print("d365")
+    time.sleep(3)
+    return jsonify({"success", True}), 200
 
 if __name__ == "__main__":
     # Run in debug mode for local development
