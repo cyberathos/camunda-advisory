@@ -103,25 +103,25 @@ def check_blog():
         return jsonify({"error": str(e)}), 400
 
 @app.route("/get_impacted_routes", methods=["post"])
-def home():
+def get_impacted_routes():
     print("get_impacted_routes")
     time.sleep(3)
     return jsonify([]), 200
 
 @app.route("/get_impacted_bookings", methods=["post"])
-def home():
+def get_impacted_bookings():
     print("get_impacted_bookings")
     time.sleep(3)
     return jsonify([]), 200
 
 @app.route("/get_customer_preferences", methods=["post"])
-def home():
+def get_customer_preferences():
     print("get_customer_preferences")
     time.sleep(3)
     return jsonify([]), 200
 
 @app.route("/d365", methods=["post"])
-def home():
+def d365():
     print("d365")
     time.sleep(3)
     return jsonify({"success", True}), 200
