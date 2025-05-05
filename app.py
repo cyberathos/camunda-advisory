@@ -86,12 +86,11 @@ def check_blog():
         parsed_output = response.output_parsed  # This should be a WeatherForecastResponse object
 
         if (parsed_output.is_weather_forecast is not None):
-            # return jsonify({
-            #     "is_weather_forecast": parsed_output.is_weather_forecast,
-            #     "area_affected": parsed_output.area_affected,
-            #     "duration": parsed_output.duration
-            # }), 200
-            return jsonify({"error": "Invalid blog URL", "status": 400}), 400
+            return jsonify({
+                "is_weather_forecast": parsed_output.is_weather_forecast,
+                "area_affected": parsed_output.area_affected,
+                "duration": parsed_output.duration
+            }), 200
         else:
             return jsonify({"error": "Invalid blog URL", "status": 400}), 400
             # return jsonify({"error": f"Failed to analyze blog content."}), 400
