@@ -125,7 +125,7 @@ def get_customer_preferences():
 def d365():
     print("d365")
     time.sleep(3)
-    return jsonify({"success", True}), 200
+    return jsonify({"success": True}), 200
 
 if __name__ == "__main__":
     # Run in debug mode for local development
