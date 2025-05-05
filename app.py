@@ -91,9 +91,10 @@ def check_blog():
             #     "area_affected": parsed_output.area_affected,
             #     "duration": parsed_output.duration
             # }), 200
-            return jsonify({"error": f"Failed to analyze blog content."}), 400
+            return jsonify({"error": "Invalid blog URL", "status": 400}), 400
         else:
-            return jsonify({"error": f"Failed to analyze blog content."}), 400
+            return jsonify({"error": "Invalid blog URL", "status": 400}), 400
+            # return jsonify({"error": f"Failed to analyze blog content."}), 400
 
     except ValidationError as ve:
         # If the AI's JSON doesn't match our WeatherForecastResponse model, return error + raw response
