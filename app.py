@@ -42,6 +42,7 @@ def check_blog():
     }
     """
     data = request.get_json(force=True)
+    print("request blog_url", data)
     blog_url = data.get("blog_url")
     if not blog_url:
         return jsonify({"error": "Please provide a 'blog_url'"}), 400
