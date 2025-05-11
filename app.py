@@ -16,8 +16,8 @@ client = OpenAI()
 
 class WeatherForecastResponse(BaseModel):
     is_weather_forecast: bool
-    area_affected: str | None
-    duration: str | None
+    area_affected: list[str] | None
+    duration: list[str] | None
 
 def fetch_blog_content(url):
     try:
@@ -61,13 +61,13 @@ def check_blog():
         "You are a helpful assistant that extracts the following weather-forecast information "
         "from a blog article:\n\n"
         "1) is_weather_forecast (boolean)\n"
-        "2) area_affected (string or null)\n"
-        "3) duration (string or null)\n\n"
+        "2) area_affected (array of affected state name or null)\n"
+        "3) duration (array of start and end dates in MM/DD/YYYY format or null)\n\n"
         "Your response must be valid JSON matching exactly this schema:\n\n"
         "{\n"
         '  "is_weather_forecast": boolean,\n'
-        '  "area_affected": string or null,\n'
-        '  "duration": string or null\n'
+        '  "area_affected": array or null,\n'
+        '  "duration": array or null\n'
         "}\n\n"
         "No additional keys or text are allowed."
     )
@@ -76,7 +76,7 @@ def check_blog():
     try:
         # The example usage from your snippet:
         response = client.responses.parse(
-            model="gpt-4.1-nano", # gpt-4o | gpt-4o-mini
+            model="gpt-4o", # gpt-4o | gpt-4o-mini
             input=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user",   "content": blog_content},
@@ -86,12 +86,11 @@ def check_blog():
         parsed_output = response.output_parsed  # This should be a WeatherForecastResponse object
 
         if (parsed_output.is_weather_forecast is not None):
-            # return jsonify({
-            #     "is_weather_forecast": parsed_output.is_weather_forecast,
-            #     "area_affected": parsed_output.area_affected,
-            #     "duration": parsed_output.duration
-            # }), 200
-            return jsonify({"error": "Invalid blog URL", "status": 400}), 400
+            return jsonify({
+                "is_weather_forecast": parsed_output.is_weather_forecast,
+                "area_affected": parsed_output.area_affected,
+                "duration": parsed_output.duration
+            }), 200
         else:
             return jsonify({"error": "Invalid blog URL", "status": 400}), 400
             # return jsonify({"error": f"Failed to analyze blog content."}), 400
