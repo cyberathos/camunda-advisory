@@ -179,21 +179,100 @@ def get_impacted_routes():
 
 @app.route("/get_impacted_bookings", methods=["post"])
 def get_impacted_bookings():
-    print("get_impacted_bookings")
-    time.sleep(3)
-    return jsonify([]), 200
+    data = request.get_json(force=True)
+    affected_shipments = data.get('affected_shipments', [])
+    
+    if not affected_shipments:
+        logger.info("No affected shipments specified. No booking affected.")
+        return jsonify([]), 400
+    
+    affected_booking_numbers = [item['BK_NBR'] for item in affected_shipments]
+    collection = db['bookings']
+
+    query = {'booking_number': {'$in': affected_booking_numbers}}
+    
+    logger.info(f"Querying bookings with query: {query}")
+    affected_bookings = list(collection.find(query))
+
+    for booking in affected_bookings:
+        booking['_id'] = str(booking['_id'])
+
+    logger.info(f"Found {len(affected_bookings)} affected bookings")
+    return jsonify(affected_bookings), 200
 
 @app.route("/get_customer_preferences", methods=["post"])
 def get_customer_preferences():
-    print("get_customer_preferences")
-    time.sleep(3)
-    return jsonify([]), 200
+    data = request.get_json(force=True)
+    affected_shipments = data.get('affected_shipments', [])
+    
+    if not affected_shipments:
+        logger.info("No affected shipments specified. No booking affected.")
+        return jsonify([]), 400
+    
+    try:
+        contact_info_list = []
+        
+        # Collections
+        shipments_collection = db["shipments"]
+        bookings_collection = db["bookings"]
+        po_collection = db["purchase_orders"]
+
+        shipment_ids = [item["CLP_NBR"] for item in affected_shipments]
+        shipments = list(shipments_collection.find({"CLP_NBR": {"$in": shipment_ids}}))
+
+        booking_numbers = [item["BK_NBR"] for item in shipments]
+        bookings = list(bookings_collection.find({"booking_number": {"$in": booking_numbers}}))
+
+        po_numbers = [int(item["PO_NBR"]) for item in bookings]
+        pos = list(po_collection.find({"PO_NBR": {"$in": po_numbers}}))
+
+        for shipment in affected_shipments:
+            contact_info = {
+                "account_code": shipment["CUST_ACCT_CD"],
+                "customer_name": shipment["CLP_CUST_ACCT_CD"],
+                "country": shipment["DEST_COUNTRY_CD"],
+                "notify1_name": shipment["NOTIFY1_NAME"],
+                "notify2_name": shipment["NOTIFY2_NAME"],
+
+                "account_name": "",
+                "shipper_name": "",
+                "trdg_prtnr_name": "",
+
+                "city": "",
+                "address": "",
+                "destination_country": "",
+            }
+
+            booking = next((item for item in bookings if item["booking_number"] == shipment["BK_NBR"]), None)
+            if booking:
+                contact_info.update({
+                    "account_name": booking["ACCOUNT_NAME"],
+                    "shipper_name": booking["shipper_name"],
+                    "trdg_prtnr_name": booking["TRDG_PRTNR_NAME"],
+                })
+
+                po = next((item for item in pos if item["PO_NBR"] == booking["PO_NBR"]), None)
+                if po:
+                    contact_info.update({
+                        "city": po["DESTINATION_CUST_CITY_NAME"],
+                        "address": f"{po["DESTINATION_CUST_CITY_NAME"]}, {po["DESTINATION_CUST_COUNTRY_NAME"]}".strip(", "),
+                        "destination_country": po["DESTINATION_CUST_COUNTRY_NAME"],
+                    })
+
+            contact_info_list.append(contact_info)
+
+        return jsonify({"contacts": contact_info_list}), 200
+    
+    except Exception as e:
+        logger.error(f"Error retrieving customer contact info: {e}")
+        return jsonify({"error": str(e)}), 500
 
 @app.route("/d365", methods=["post"])
 def d365():
-    print("d365")
+    data = request.get_json(force=True)
+    print("d365:", data)
     time.sleep(3)
-    return jsonify({"success": True}), 200
+    return jsonify({"success": True, "data": data}), 200
  
 if __name__ == "__main__":
     # Run in debug mode for local development
