@@ -255,7 +255,7 @@ def get_customer_preferences():
                 if po:
                     contact_info.update({
                         "city": po["DESTINATION_CUST_CITY_NAME"],
-                        "address": f"{po["DESTINATION_CUST_CITY_NAME"]}, {po["DESTINATION_CUST_COUNTRY_NAME"]}".strip(", "),
+                        "address": f"{po['DESTINATION_CUST_CITY_NAME']}, {po['DESTINATION_CUST_COUNTRY_NAME']}".strip(", "),
                         "destination_country": po["DESTINATION_CUST_COUNTRY_NAME"],
                     })
 
