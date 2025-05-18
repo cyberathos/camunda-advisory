@@ -5,10 +5,20 @@ from flask import Flask, request, jsonify
 from pydantic import BaseModel, ValidationError
 from bs4 import BeautifulSoup
 from openai import OpenAI
+import pandas as pd
+from pymongo import MongoClient
+from datetime import datetime
 from dotenv import load_dotenv
+import logging
+
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
 
 load_dotenv()
 os.environ["OPENAI_API_KEY"] = os.getenv('OPENAI_API_KEY')
+
+client = MongoClient(os.getenv('MONGODB_URL'))
+db = client[os.getenv('DB_NAME')]
 
 app = Flask(__name__)
 
@@ -28,6 +38,14 @@ def fetch_blog_content(url):
         return text.strip()
     except Exception as e:
         raise Exception(f"Error fetching blog content: {str(e)}")
+
+def parse_date(date_str):
+    """Parse date string in MM/DD/YYYY format to datetime object."""
+    try:
+        return datetime.strptime(date_str, '%m/%d/%Y')
+    except ValueError as e:
+        logger.error(f"Failed to parse date {date_str}: {e}")
+        raise
 
 @app.route("/", methods=["get"])
 def home():
@@ -61,7 +79,7 @@ def check_blog():
         "You are a helpful assistant that extracts the following weather-forecast information "
         "from a blog article:\n\n"
         "1) is_weather_forecast (boolean)\n"
-        "2) area_affected (array of affected state name or null)\n"
+        "2) area_affected (array of affected state's 2-letter US state codes or null)\n"
         "3) duration (array of start and end dates in MM/DD/YYYY format or null)\n\n"
         "Your response must be valid JSON matching exactly this schema:\n\n"
         "{\n"
@@ -109,9 +127,55 @@ def check_blog():
 
 @app.route("/get_impacted_routes", methods=["post"])
 def get_impacted_routes():
-    print("get_impacted_routes")
-    time.sleep(3)
-    return jsonify([]), 200
+    """
+    POST JSON body example:
+    {
+        "area_affected": [
+            "CA"
+        ],
+        "duration": [
+            "05/01/2025",
+            "05/10/2025"
+        ],
+        "is_weather_forecast": true
+    }
+    """
+    data = request.get_json(force=True)
+    affected_areas = data.get('area_affected', [])
+    duration = data.get('duration', [])
+
+    if not affected_areas:
+        logger.info("No affected areas specified. No shipments affected.")
+        return jsonify([]), 400
+
+    if len(duration) != 2:
+        logger.error("Duration must contain start and end dates.")
+        raise ValueError("Invalid duration format")    
+
+    start_date = parse_date(duration[0])
+    end_date = parse_date(duration[1])
+
+    collection = db['shipments']
+
+    query = {
+        '$or': [
+            {'DEST_COUNTRY_CD': {'$in': affected_areas}},
+            {'DESTINATION_CUST_LOCATION_CD': {'$in': affected_areas}}
+        ],
+        'ACT_DLVY_DT': {
+            '$gte': start_date,
+            '$lte': end_date
+        }
+    }
+
+    logger.info(f"Querying shipments with query: {query}")
+    affected_shipments = list(collection.find(query))
+
+    for shipment in affected_shipments:
+        shipment['_id'] = str(shipment['_id'])
+
+    logger.info(f"Found {len(affected_shipments)} affected shipments")
+    return jsonify(affected_shipments), 200
 
 @app.route("/get_impacted_bookings", methods=["post"])
 def get_impacted_bookings():
@@ -130,7 +194,7 @@ def d365():
     print("d365")
     time.sleep(3)
     return jsonify({"success": True}), 200
-
+ 
 if __name__ == "__main__":
     # Run in debug mode for local development
     app.run(host="0.0.0.0", port=5000, debug=True)
