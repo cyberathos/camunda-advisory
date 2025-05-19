@@ -62,22 +62,26 @@ def check_blog():
     data = request.get_json(force=True)
     print("request blog_url", data)
     blog_url = data.get("blog_url")
-    if not blog_url:
-        return jsonify({"error": "Please provide a 'blog_url'"}), 400
     
-    # Fetch blog content
-    try:
-        # blog_response = requests.get(blog_url, timeout=10)
-        # blog_response.raise_for_status()
-        # blog_content = blog_response.text
-        blog_content = fetch_blog_content(blog_url)
-    except Exception as e:
-        return jsonify({"error": f"Failed to fetch or read blog content: {str(e)}"}), 400
+    # if not blog_url:
+    #     return jsonify({"error": "Please provide a 'blog_url'"}), 400
+    
+    # # Fetch blog content
+    # try:
+    #     # blog_response = requests.get(blog_url, timeout=10)
+    #     # blog_response.raise_for_status()
+    #     # blog_content = blog_response.text
+    #     blog_content = fetch_blog_content(blog_url)
+    # except Exception as e:
+    #     return jsonify({"error": f"Failed to fetch or read blog content: {str(e)}"}), 400
 
     # System prompt to strictly enforce a JSON structure that matches our Pydantic model
     system_prompt = (
-        "You are a helpful assistant that extracts the following weather-forecast information "
-        "from a blog article:\n\n"
+        "You are a helpful assistant that analyzes weather forecast information from the content of a blog article "
+        "given its URL.\n\n"
+        "Analyze the blog article from the following URL:\n\n"
+        f"URL: {blog_url}\n\n"
+        "Extract the following information:\n"
         "1) is_weather_forecast (boolean)\n"
         "2) area_affected (array of affected state's 2-letter US state codes or null)\n"
         "3) duration (array of start and end dates in YYYY-MM-DD format or null)\n\n"
