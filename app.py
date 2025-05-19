@@ -40,9 +40,9 @@ def fetch_blog_content(url):
         raise Exception(f"Error fetching blog content: {str(e)}")
 
 def parse_date(date_str):
-    """Parse date string in MM/DD/YYYY format to datetime object."""
+    """Parse date string in YYYY-MM-DD format to datetime object."""
     try:
-        return datetime.strptime(date_str, '%m/%d/%Y')
+        return datetime.strptime(date_str, '%Y-%m-%d')
     except ValueError as e:
         logger.error(f"Failed to parse date {date_str}: {e}")
         raise
@@ -80,7 +80,7 @@ def check_blog():
         "from a blog article:\n\n"
         "1) is_weather_forecast (boolean)\n"
         "2) area_affected (array of affected state's 2-letter US state codes or null)\n"
-        "3) duration (array of start and end dates in MM/DD/YYYY format or null)\n\n"
+        "3) duration (array of start and end dates in YYYY-MM-DD format or null)\n\n"
         "Your response must be valid JSON matching exactly this schema:\n\n"
         "{\n"
         '  "is_weather_forecast": boolean,\n'
@@ -180,9 +180,9 @@ def get_impacted_routes():
 @app.route("/get_impacted_bookings", methods=["post"])
 def get_impacted_bookings():
     data = request.get_json(force=True)
-    affected_shipments = data.get('affected_shipments', [])
+    affected_shipments = data.get('affected_shipments', None)
     
-    if not affected_shipments:
+    if affected_shipments is None:
         logger.info("No affected shipments specified. No booking affected.")
         return jsonify([]), 400
     
@@ -203,9 +203,9 @@ def get_impacted_bookings():
 @app.route("/get_customer_preferences", methods=["post"])
 def get_customer_preferences():
     data = request.get_json(force=True)
-    affected_shipments = data.get('affected_shipments', [])
+    affected_shipments = data.get('affected_shipments', None)
     
-    if not affected_shipments:
+    if affected_shipments is None:
         logger.info("No affected shipments specified. No booking affected.")
         return jsonify([]), 400
     
