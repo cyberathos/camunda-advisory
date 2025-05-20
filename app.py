@@ -101,7 +101,7 @@ def check_blog():
             model="gpt-4o", # gpt-4o | gpt-4o-mini
             input=[
                 {"role": "system", "content": system_prompt},
-                {"role": "user",   "content": blog_content},
+                {"role": "user",   "content": blog_url},
             ],
             text_format=WeatherForecastResponse,
         )
